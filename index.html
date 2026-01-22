@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คำนวน Lot Size </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+        }
+        .glass-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-lg glass-card p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">คำนวน Lot Size 📊</h1>
+            <p class="text-slate-500 mt-2 text-sm text-balance">คำนวณขนาด Lot ให้เหมาะสมกับความเสี่ยงที่คุณรับได้</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left Side Inputs -->
+            <div class="space-y-4">
+                <!-- Input A: ทุน -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">A: ทุนทั้งหมด (Balance)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-slate-400">$</span>
+                        <input type="number" id="capital" placeholder="0.00" 
+                            class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Input B: ความเสี่ยง% -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">B: ความเสี่ยง (%)</label>
+                    <div class="relative">
+                        <span class="absolute right-3 top-3 text-slate-400">%</span>
+                        <input type="number" id="riskPercent" placeholder="1-5" 
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side Inputs -->
+            <div class="space-y-4">
+                <!-- Input C: จุดขาดทุน -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">C: ระยะ Stop Loss (Pips)</label>
+                    <input type="number" id="stopLossPips" placeholder="เช่น 300 หรือ 500" 
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+
+                <!-- Contract Size Selector -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">ประเภทบัญชี / สัญญา</label>
+                    <select id="contractSize" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer">
+                        <option value="100000">Standard Lot (100,000)</option>
+                        <option value="10000">Mini Lot (10,000)</option>
+                        <option value="1000">Micro Lot (1,000)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="calculateLot()" 
+            class="w-full mt-8 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-lg">
+            คำนวณ Lot Size
+        </button>
+
+        <!-- Result Section -->
+        <div id="resultContainer" class="mt-8 grid grid-cols-1 gap-4 hidden">
+            <div class="p-6 bg-blue-600 rounded-2xl text-white shadow-inner">
+                <p class="text-blue-100 text-xs uppercase font-bold tracking-widest mb-1">Recommended Lot Size</p>
+                <h2 id="lotResult" class="text-5xl font-extrabold tracking-tight">0.00</h2>
+                <p class="text-blue-100 text-xs mt-2">*อ้างอิงจากมูลค่า $10 ต่อ 1 standard lot (สหรับคู่เงินหลัก)</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <p class="text-slate-500 text-xs font-semibold mb-1 uppercase">เงินที่ยอมเสีย (Risk)</p>
+                    <p id="riskAmount" class="text-xl font-bold text-red-600">$0.00</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <p class="text-slate-500 text-xs font-semibold mb-1 uppercase">Value per Pip</p>
+                    <p id="pipValue" class="text-xl font-bold text-slate-800">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorBox" class="mt-6 p-4 bg-orange-50 text-orange-700 text-sm rounded-xl hidden border border-orange-100">
+            ⚠️ กรุณากรอกข้อมูลให้ครบทุกช่อง และระยะ SL ต้องมากกว่า 0
+        </div>
+    </div>
+
+    <script>
+        function calculateLot() {
+            const capital = parseFloat(document.getElementById('capital').value);
+            const riskPercent = parseFloat(document.getElementById('riskPercent').value);
+            const stopLossPips = parseFloat(document.getElementById('stopLossPips').value);
+            const contractSize = parseFloat(document.getElementById('contractSize').value);
+
+            const resultContainer = document.getElementById('resultContainer');
+            const errorBox = document.getElementById('errorBox');
+
+            if (isNaN(capital) || isNaN(riskPercent) || isNaN(stopLossPips) || stopLossPips <= 0) {
+                errorBox.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+                return;
+            }
+
+            errorBox.classList.add('hidden');
+
+            // 1. คำนวณเงินที่ยอมขาดทุนได้ (Risk Amount)
+            const riskAmt = capital * (riskPercent / 100);
+            
+            // 2. คำนวณ Lot Size (สำหรับคู่เงินหลัก เช่น EURUSD ที่ 1 pip = $10 ต่อ 1 standard lot)
+            // สูตร: Lot = Risk Amount / (Stop Loss in Pips * Value Per Pip)
+            // ในที่นี้สมมติ standard lot มี value per pip = $10 สำหรับคู่เงิน XXXUSD 
+            // หรือคำนวณแบบ General: Lot = RiskAmt / (SL * (ContractSize * 0.0001))
+            
+            const pipValuePerLot = contractSize * 0.0001;
+            const lotSize = riskAmt / (stopLossPips * pipValuePerLot);
+
+            // แสดงผล
+            document.getElementById('riskAmount').innerText = '$' + riskAmt.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('pipValue').innerText = '$' + (lotSize * pipValuePerLot).toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('lotResult').innerText = lotSize.toFixed(2);
+            
+            resultContainer.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
