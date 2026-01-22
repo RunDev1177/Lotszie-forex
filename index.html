@@ -3,23 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>คำนวน Lot Size </title>
+    <title>Trading Lot Size Calculator (Specific Pairs)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
         }
         .glass-card {
             background: #ffffff;
             border-radius: 1.5rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
         }
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
+        }
+        .input-focus {
+            transition: all 0.2s;
+        }
+        .input-focus:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
     </style>
 </head>
@@ -27,91 +34,117 @@
 
     <div class="w-full max-w-lg glass-card p-8">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">คำนวน Lot Size 📊</h1>
-            <p class="text-slate-500 mt-2 text-sm text-balance">คำนวณขนาด Lot ให้เหมาะสมกับความเสี่ยงที่คุณรับได้</p>
+            <h1 class="text-3xl font-bold text-slate-800">FX Lot Calculator 📈</h1>
+            <p class="text-slate-500 mt-2">คำนวณ Lot Size แม่นยำตามคู่เงิน</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Left Side Inputs -->
-            <div class="space-y-4">
+        <div class="space-y-6">
+            <!-- คู่เงิน Selection -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">เลือกคู่เงิน (Select Pair)</label>
+                <select id="pairSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer">
+                    <option value="XAUUSD">XAUUSD (Gold) - 1 Pip = $10</option>
+                    <option value="EURUSD">EURUSD - 1 Pip = $10</option>
+                    <option value="USDJPY">USDJPY - 1 Pip ≈ $8.33</option>
+                    <option value="USDCAD">USDCAD - 1 Pip ≈ $7.14</option>
+                    <option value="EURAUD">EURAUD - 1 Pip ≈ $6.50</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Input A: ทุน -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">A: ทุนทั้งหมด (Balance)</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">ทุนทั้งหมด (Balance)</label>
                     <div class="relative">
-                        <span class="absolute left-3 top-3 text-slate-400">$</span>
-                        <input type="number" id="capital" placeholder="0.00" 
-                            class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                        <span class="absolute left-3 top-3 text-slate-400 font-medium">$</span>
+                        <input type="number" id="capital" placeholder="1000" 
+                            class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
                     </div>
                 </div>
 
                 <!-- Input B: ความเสี่ยง% -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">B: ความเสี่ยง (%)</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">ความเสี่ยง (%)</label>
                     <div class="relative">
-                        <span class="absolute right-3 top-3 text-slate-400">%</span>
-                        <input type="number" id="riskPercent" placeholder="1-5" 
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                        <span class="absolute right-3 top-3 text-slate-400 font-medium">%</span>
+                        <input type="number" id="riskPercent" placeholder="1" 
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
                     </div>
                 </div>
             </div>
 
-            <!-- Right Side Inputs -->
-            <div class="space-y-4">
-                <!-- Input C: จุดขาดทุน -->
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">C: ระยะ Stop Loss (Pips)</label>
-                    <input type="number" id="stopLossPips" placeholder="เช่น 300 หรือ 500" 
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                </div>
-
-                <!-- Contract Size Selector -->
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">ประเภทบัญชี / สัญญา</label>
-                    <select id="contractSize" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer">
-                        <option value="100000">Standard Lot (100,000)</option>
-                        <option value="10000">Mini Lot (10,000)</option>
-                        <option value="1000">Micro Lot (1,000)</option>
-                    </select>
-                </div>
+            <!-- Input C: ระยะ Stop Loss -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2" id="slLabel">ระยะ Stop Loss (Pips)</label>
+                <input type="number" id="stopLossPips" placeholder="เช่น 300 หรือ 500" 
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
+                <p class="text-xs text-slate-400 mt-1" id="slHint">*สำหรับ Gold 100 pips = $1.00</p>
             </div>
+
+            <button onclick="calculateLot()" 
+                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-lg">
+                คำนวณหา Lot Size
+            </button>
         </div>
 
-        <button onclick="calculateLot()" 
-            class="w-full mt-8 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-lg">
-            คำนวณ Lot Size
-        </button>
-
         <!-- Result Section -->
-        <div id="resultContainer" class="mt-8 grid grid-cols-1 gap-4 hidden">
-            <div class="p-6 bg-blue-600 rounded-2xl text-white shadow-inner">
-                <p class="text-blue-100 text-xs uppercase font-bold tracking-widest mb-1">Recommended Lot Size</p>
-                <h2 id="lotResult" class="text-5xl font-extrabold tracking-tight">0.00</h2>
-                <p class="text-blue-100 text-xs mt-2">*อ้างอิงจากมูลค่า $10 ต่อ 1 standard lot (สหรับคู่เงินหลัก)</p>
+        <div id="resultContainer" class="mt-8 space-y-4 hidden">
+            <div class="p-6 bg-blue-600 rounded-2xl text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <p class="text-blue-100 text-xs uppercase font-bold tracking-widest mb-1">Recommended Lot Size</p>
+                    <h2 id="lotResult" class="text-6xl font-extrabold tracking-tight">0.00</h2>
+                    <p id="pairInfo" class="text-blue-200 text-sm mt-2 font-medium"></p>
+                </div>
+                <!-- Decoration Icon -->
+                <div class="absolute -right-2 -bottom-2 opacity-20 transform rotate-12">
+                    <svg width="100" height="100" fill="white" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>
+                </div>
             </div>
             
             <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                    <p class="text-slate-500 text-xs font-semibold mb-1 uppercase">เงินที่ยอมเสีย (Risk)</p>
-                    <p id="riskAmount" class="text-xl font-bold text-red-600">$0.00</p>
+                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                    <p class="text-slate-400 text-xs font-semibold mb-1 uppercase">เงินที่ยอมเสีย</p>
+                    <p id="riskAmount" class="text-xl font-bold text-red-500">$0.00</p>
                 </div>
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                    <p class="text-slate-500 text-xs font-semibold mb-1 uppercase">Value per Pip</p>
-                    <p id="pipValue" class="text-xl font-bold text-slate-800">$0.00</p>
+                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                    <p class="text-slate-400 text-xs font-semibold mb-1 uppercase">Pip Value ($)</p>
+                    <p id="pipValueDisplay" class="text-xl font-bold text-slate-800">$0.00</p>
                 </div>
             </div>
         </div>
 
-        <div id="errorBox" class="mt-6 p-4 bg-orange-50 text-orange-700 text-sm rounded-xl hidden border border-orange-100">
-            ⚠️ กรุณากรอกข้อมูลให้ครบทุกช่อง และระยะ SL ต้องมากกว่า 0
+        <div id="errorBox" class="mt-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl hidden border border-red-100 flex items-center">
+            <span class="mr-2">⚠️</span> กรุณากรอกข้อมูลให้ครบถ้วนและค่าต้องมากกว่า 0
         </div>
     </div>
 
     <script>
+        // ข้อมูลจำลอง Pip Value ต่อ 1 Lot (Standard) ของแต่ละคู่เงิน
+        // หมายเหตุ: ในตลาดจริงค่านี้อาจเปลี่ยนแปลงตามอัตราแลกเปลี่ยน ณ ขณะนั้น
+        const pipValues = {
+            'XAUUSD': 10,
+            'EURUSD': 10,
+            'USDJPY': 8.33,
+            'USDCAD': 7.14,
+            'EURAUD': 6.50
+        };
+
+        const pairSelect = document.getElementById('pairSelect');
+        const slHint = document.getElementById('slHint');
+
+        pairSelect.addEventListener('change', function() {
+            if (this.value === 'XAUUSD') {
+                slHint.innerText = "*สำหรับ Gold 100 pips = $1.00";
+            } else {
+                slHint.innerText = "*Pips พื้นฐาน (4-5 หลักทศนิยม)";
+            }
+        });
+
         function calculateLot() {
             const capital = parseFloat(document.getElementById('capital').value);
             const riskPercent = parseFloat(document.getElementById('riskPercent').value);
             const stopLossPips = parseFloat(document.getElementById('stopLossPips').value);
-            const contractSize = parseFloat(document.getElementById('contractSize').value);
+            const selectedPair = pairSelect.value;
 
             const resultContainer = document.getElementById('resultContainer');
             const errorBox = document.getElementById('errorBox');
@@ -124,21 +157,21 @@
 
             errorBox.classList.add('hidden');
 
-            // 1. คำนวณเงินที่ยอมขาดทุนได้ (Risk Amount)
+            // 1. คำนวณจำนวนเงินที่ยอมเสียได้ (Risk Amount)
             const riskAmt = capital * (riskPercent / 100);
             
-            // 2. คำนวณ Lot Size (สำหรับคู่เงินหลัก เช่น EURUSD ที่ 1 pip = $10 ต่อ 1 standard lot)
-            // สูตร: Lot = Risk Amount / (Stop Loss in Pips * Value Per Pip)
-            // ในที่นี้สมมติ standard lot มี value per pip = $10 สำหรับคู่เงิน XXXUSD 
-            // หรือคำนวณแบบ General: Lot = RiskAmt / (SL * (ContractSize * 0.0001))
-            
-            const pipValuePerLot = contractSize * 0.0001;
+            // 2. ดึงค่า Pip Value ของคู่เงินที่เลือก
+            const pipValuePerLot = pipValues[selectedPair];
+
+            // 3. คำนวณ Lot Size
+            // สูตร: Lot = Risk Amount / (Stop Loss in Pips * Pip Value per Lot)
             const lotSize = riskAmt / (stopLossPips * pipValuePerLot);
 
             // แสดงผล
             document.getElementById('riskAmount').innerText = '$' + riskAmt.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('pipValue').innerText = '$' + (lotSize * pipValuePerLot).toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('pipValueDisplay').innerText = '$' + pipValuePerLot.toFixed(2);
             document.getElementById('lotResult').innerText = lotSize.toFixed(2);
+            document.getElementById('pairInfo').innerText = "คำนวณแม่นยำสำหรับคู่เงิน: " + selectedPair;
             
             resultContainer.classList.remove('hidden');
         }
