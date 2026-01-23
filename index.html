@@ -30,11 +30,6 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        .precision-radio:checked + label {
-            background-color: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
         .type-radio:checked + label {
             background-color: #ef4444;
             color: white;
@@ -135,19 +130,6 @@
                 <input type="hidden" id="rrValue" value="2">
             </div>
 
-            <!-- Lot Precision -->
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">ทศนิยม Lot Size</label>
-                <div class="grid grid-cols-6 gap-2">
-                    <div><input type="radio" name="precision" id="p2" value="2" class="hidden precision-radio" checked><label for="p2" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">2</label></div>
-                    <div><input type="radio" name="precision" id="p3" value="3" class="hidden precision-radio"><label for="p3" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">3</label></div>
-                    <div><input type="radio" name="precision" id="p4" value="4" class="hidden precision-radio"><label for="p4" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">4</label></div>
-                    <div><input type="radio" name="precision" id="p5" value="5" class="hidden precision-radio"><label for="p5" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">5</label></div>
-                    <div><input type="radio" name="precision" id="p6" value="6" class="hidden precision-radio"><label for="p6" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">6</label></div>
-                    <div><input type="radio" name="precision" id="p7" value="7" class="hidden precision-radio"><label for="p7" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">7</label></div>
-                </div>
-            </div>
-
             <button onclick="calculateLot()" 
                 class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-lg">
                 คำนวณผลลัพธ์
@@ -187,7 +169,6 @@
             const rr = parseFloat(document.getElementById('rrValue').value);
             const selectedPair = document.getElementById('pairSelect').value;
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
-            const precision = parseInt(document.querySelector('input[name="precision"]:checked').value);
 
             if (isNaN(capital) || isNaN(riskPercent) || isNaN(entry) || isNaN(slPoints) || slPoints <= 0) {
                 Swal.fire({
@@ -209,7 +190,7 @@
             const tpPrice = isBuy ? (entry + (priceDiff * rr)) : (entry - (priceDiff * rr));
             const profitExpected = riskAmt * rr;
 
-            // Show Results ONLY in SweetAlert
+            // Show Results ONLY in SweetAlert (No Decimals for USD amounts)
             Swal.fire({
                 title: 'สรุปแผนการเทรด 💹',
                 html: `
@@ -217,19 +198,19 @@
                         <!-- Lot Size Highlight -->
                         <div class="bg-blue-600 p-6 rounded-2xl shadow-xl text-white">
                             <span class="block text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Lot Size ที่แนะนำ</span>
-                            <span class="text-5xl font-extrabold tracking-tight">${lotSize.toFixed(precision)}</span>
+                            <span class="text-5xl font-extrabold tracking-tight">${lotSize.toFixed(2)}</span>
                         </div>
                         
-                        <!-- Financial Summary -->
+                        <!-- Financial Summary (No Decimals for Amount) -->
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-center">
                                 <span class="block text-emerald-600 text-[11px] font-bold uppercase mb-1">กำไรเป้าหมาย (TP)</span>
-                                <span class="text-xl font-bold text-emerald-700">+$${profitExpected.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                <span class="text-xl font-bold text-emerald-700">+$${Math.round(profitExpected).toLocaleString()}</span>
                                 <div class="mt-2 text-[10px] font-mono text-emerald-600 bg-white border border-emerald-100 rounded py-0.5">Price: ${tpPrice.toFixed(config.decimal)}</div>
                             </div>
                             <div class="bg-red-50 p-4 rounded-xl border border-red-100 text-center">
                                 <span class="block text-red-600 text-[11px] font-bold uppercase mb-1">เงินที่ยอมเสีย (SL)</span>
-                                <span class="text-xl font-bold text-red-700">-$${riskAmt.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                <span class="text-xl font-bold text-red-700">-$${Math.round(riskAmt).toLocaleString()}</span>
                                 <div class="mt-2 text-[10px] font-mono text-red-600 bg-white border border-red-100 rounded py-0.5">Price: ${slPrice.toFixed(config.decimal)}</div>
                             </div>
                         </div>
