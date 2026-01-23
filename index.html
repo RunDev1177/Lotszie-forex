@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Lot Size Calculator (Specific Pairs)</title>
+    <title>Trading Lot Size Calculator (Point-based)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -28,128 +28,203 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+        .precision-radio:checked + label {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .type-radio:checked + label {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        #typeBuy:checked + label {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-lg glass-card p-8">
+    <div class="w-full max-w-lg glass-card p-8 my-8">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">FX Lot Calculator 📈</h1>
-            <p class="text-slate-500 mt-2">คำนวณ Lot Size แม่นยำตามคู่เงิน</p>
+            <h1 class="text-3xl font-bold text-slate-800">คำนวน Lotsize 📈</h1>
+            <p class="text-slate-500 mt-2 text-sm">คำนวณ Lot Size ตามระยะจุด (Points)</p>
         </div>
 
         <div class="space-y-6">
             <!-- คู่เงิน Selection -->
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">เลือกคู่เงิน (Select Pair)</label>
-                <select id="pairSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer">
-                    <option value="XAUUSD">XAUUSD (Gold) - 1 Pip = $10</option>
-                    <option value="EURUSD">EURUSD - 1 Pip = $10</option>
-                    <option value="USDJPY">USDJPY - 1 Pip ≈ $8.33</option>
-                    <option value="USDCAD">USDCAD - 1 Pip ≈ $7.14</option>
-                    <option value="EURAUD">EURAUD - 1 Pip ≈ $6.50</option>
+                <select id="pairSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer text-slate-700">
+                    <option value="XAUUSD">XAUUSD (Gold)</option>
+                    <option value="EURUSD">EURUSD</option>
+                    <option value="USDJPY">USDJPY</option>
+                    <option value="USDCAD">USDCAD</option>
+                    <option value="EURAUD">EURAUD</option>
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Input A: ทุน -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Type Selection -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">ทุนทั้งหมด (Balance)</label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-3 text-slate-400 font-medium">$</span>
-                        <input type="number" id="capital" placeholder="1000" 
-                            class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">ทิศทาง (Type)</label>
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <input type="radio" name="orderType" id="typeBuy" value="buy" class="hidden type-radio" checked>
+                            <label for="typeBuy" class="flex items-center justify-center py-3 border border-slate-200 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-50 transition-all uppercase">Buy</label>
+                        </div>
+                        <div class="flex-1">
+                            <input type="radio" name="orderType" id="typeSell" value="sell" class="hidden type-radio">
+                            <label for="typeSell" class="flex items-center justify-center py-3 border border-slate-200 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-50 transition-all uppercase">Sell</label>
+                        </div>
                     </div>
                 </div>
-
                 <!-- Input B: ความเสี่ยง% -->
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">ความเสี่ยง (%)</label>
                     <div class="relative">
                         <span class="absolute right-3 top-3 text-slate-400 font-medium">%</span>
-                        <input type="number" id="riskPercent" placeholder="1" 
+                        <input type="number" id="riskPercent" placeholder="1" value="3"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
                     </div>
                 </div>
             </div>
 
-            <!-- Input C: ระยะ Stop Loss -->
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2" id="slLabel">ระยะ Stop Loss (Pips)</label>
-                <input type="number" id="stopLossPips" placeholder="เช่น 300 หรือ 500" 
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
-                <p class="text-xs text-slate-400 mt-1" id="slHint">*สำหรับ Gold 100 pips = $1.00</p>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">ทุนทั้งหมด (Balance)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-slate-400 font-medium">$</span>
+                    <input type="number" id="capital" placeholder="1000" 
+                        class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Input: ราคาเปิด -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">ราคาเปิด (Entry)</label>
+                    <input type="number" id="entryPrice" step="any" placeholder="4920.00" 
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
+                </div>
+
+                <!-- Input: SL Distance in Points -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">ระยะ SL (จุด/Points)</label>
+                    <input type="number" id="slPoints" step="1" placeholder="500" 
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
+                </div>
+            </div>
+
+            <!-- Risk/Reward Selection -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">อัตราส่วน RR (Risk:Reward)</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="setRR(1)" class="rr-btn py-2 px-3 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" data-rr="1">1:1</button>
+                    <button onclick="setRR(1.5)" class="rr-btn py-2 px-3 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" data-rr="1.5">1:1.5</button>
+                    <button onclick="setRR(2)" class="rr-btn py-2 px-3 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" data-rr="2">1:2</button>
+                    <button onclick="setRR(3)" class="rr-btn py-2 px-3 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" data-rr="3">1:3</button>
+                </div>
+                <input type="hidden" id="rrValue" value="2">
+            </div>
+
+            <!-- Lot Size Decimal Precision Selection -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">ทศนิยม Lot Size</label>
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    <div><input type="radio" name="precision" id="p2" value="2" class="hidden precision-radio" checked><label for="p2" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">2</label></div>
+                    <div><input type="radio" name="precision" id="p3" value="3" class="hidden precision-radio"><label for="p3" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">3</label></div>
+                    <div><input type="radio" name="precision" id="p4" value="4" class="hidden precision-radio"><label for="p4" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">4</label></div>
+                    <div><input type="radio" name="precision" id="p5" value="5" class="hidden precision-radio"><label for="p5" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">5</label></div>
+                    <div><input type="radio" name="precision" id="p6" value="6" class="hidden precision-radio"><label for="p6" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">6</label></div>
+                    <div><input type="radio" name="precision" id="p7" value="7" class="hidden precision-radio"><label for="p7" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">7</label></div>
+                </div>
             </div>
 
             <button onclick="calculateLot()" 
                 class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-lg">
-                คำนวณหา Lot Size
+                คำนวณผลลัพธ์
             </button>
         </div>
 
         <!-- Result Section -->
         <div id="resultContainer" class="mt-8 space-y-4 hidden">
-            <div class="p-6 bg-blue-600 rounded-2xl text-white relative overflow-hidden">
+            <!-- Main Result: Lot Size -->
+            <div class="p-6 bg-blue-600 rounded-2xl text-white relative overflow-hidden text-center shadow-xl shadow-blue-200">
                 <div class="relative z-10">
-                    <p class="text-blue-100 text-xs uppercase font-bold tracking-widest mb-1">Recommended Lot Size</p>
-                    <h2 id="lotResult" class="text-6xl font-extrabold tracking-tight">0.00</h2>
-                    <p id="pairInfo" class="text-blue-200 text-sm mt-2 font-medium"></p>
+                    <p class="text-blue-100 text-xs uppercase font-bold tracking-widest mb-1">Lot Size ที่ควรเปิด</p>
+                    <h2 id="lotResult" class="text-5xl font-extrabold tracking-tight break-all">0.00</h2>
+                    <p id="distInfo" class="text-blue-200 text-sm mt-2 font-medium"></p>
                 </div>
-                <!-- Decoration Icon -->
-                <div class="absolute -right-2 -bottom-2 opacity-20 transform rotate-12">
-                    <svg width="100" height="100" fill="white" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>
+            </div>
+
+            <!-- Price Targets -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-center">
+                    <p class="text-emerald-600 text-xs font-bold uppercase tracking-wide mb-1">Take Profit (TP)</p>
+                    <h3 id="tpResult" class="text-2xl font-bold text-emerald-700">0.00</h3>
+                </div>
+                <div class="p-4 bg-red-50 rounded-xl border border-red-100 text-center">
+                    <p class="text-red-600 text-xs font-bold uppercase tracking-wide mb-1">Stop Loss (SL)</p>
+                    <h3 id="slResultPrice" class="text-2xl font-bold text-red-700">0.00</h3>
                 </div>
             </div>
             
             <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm text-center">
                     <p class="text-slate-400 text-xs font-semibold mb-1 uppercase">เงินที่ยอมเสีย</p>
                     <p id="riskAmount" class="text-xl font-bold text-red-500">$0.00</p>
                 </div>
-                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
-                    <p class="text-slate-400 text-xs font-semibold mb-1 uppercase">Pip Value ($)</p>
-                    <p id="pipValueDisplay" class="text-xl font-bold text-slate-800">$0.00</p>
+                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm text-center">
+                    <p class="text-slate-400 text-xs font-semibold mb-1 uppercase">กำไรเป้าหมาย</p>
+                    <p id="profitAmount" class="text-xl font-bold text-emerald-600">$0.00</p>
                 </div>
             </div>
         </div>
 
         <div id="errorBox" class="mt-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl hidden border border-red-100 flex items-center">
-            <span class="mr-2">⚠️</span> กรุณากรอกข้อมูลให้ครบถ้วนและค่าต้องมากกว่า 0
+            <span class="mr-2">⚠️</span> กรุณากรอกข้อมูลให้ครบถ้วนและระยะ SL ต้องมากกว่า 0
         </div>
     </div>
 
     <script>
-        // ข้อมูลจำลอง Pip Value ต่อ 1 Lot (Standard) ของแต่ละคู่เงิน
-        // หมายเหตุ: ในตลาดจริงค่านี้อาจเปลี่ยนแปลงตามอัตราแลกเปลี่ยน ณ ขณะนั้น
-        const pipValues = {
-            'XAUUSD': 10,
-            'EURUSD': 10,
-            'USDJPY': 8.33,
-            'USDCAD': 7.14,
-            'EURAUD': 6.50
+        const pairConfig = {
+            'XAUUSD': { pipValue: 10, multiplier: 10, decimal: 2 },    
+            'EURUSD': { pipValue: 10, multiplier: 10000, decimal: 5 }, 
+            'USDJPY': { pipValue: 8.33, multiplier: 100, decimal: 3 }, 
+            'USDCAD': { pipValue: 7.14, multiplier: 10000, decimal: 5 },
+            'EURAUD': { pipValue: 6.50, multiplier: 10000, decimal: 5 }
         };
 
-        const pairSelect = document.getElementById('pairSelect');
-        const slHint = document.getElementById('slHint');
+        function setRR(val) {
+            document.getElementById('rrValue').value = val;
+            document.querySelectorAll('.rr-btn').forEach(btn => {
+                if(parseFloat(btn.getAttribute('data-rr')) === val) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+                    btn.classList.remove('border-slate-200', 'text-slate-600');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                    btn.classList.add('border-slate-200', 'text-slate-600');
+                }
+            });
+        }
 
-        pairSelect.addEventListener('change', function() {
-            if (this.value === 'XAUUSD') {
-                slHint.innerText = "*สำหรับ Gold 100 pips = $1.00";
-            } else {
-                slHint.innerText = "*Pips พื้นฐาน (4-5 หลักทศนิยม)";
-            }
-        });
+        setRR(2);
 
         function calculateLot() {
             const capital = parseFloat(document.getElementById('capital').value);
             const riskPercent = parseFloat(document.getElementById('riskPercent').value);
-            const stopLossPips = parseFloat(document.getElementById('stopLossPips').value);
-            const selectedPair = pairSelect.value;
+            const entry = parseFloat(document.getElementById('entryPrice').value);
+            const slPoints = parseFloat(document.getElementById('slPoints').value);
+            const rr = parseFloat(document.getElementById('rrValue').value);
+            const selectedPair = document.getElementById('pairSelect').value;
+            const orderType = document.querySelector('input[name="orderType"]:checked').value;
+            const precision = parseInt(document.querySelector('input[name="precision"]:checked').value);
 
             const resultContainer = document.getElementById('resultContainer');
             const errorBox = document.getElementById('errorBox');
 
-            if (isNaN(capital) || isNaN(riskPercent) || isNaN(stopLossPips) || stopLossPips <= 0) {
+            if (isNaN(capital) || isNaN(riskPercent) || isNaN(entry) || isNaN(slPoints) || slPoints <= 0) {
                 errorBox.classList.remove('hidden');
                 resultContainer.classList.add('hidden');
                 return;
@@ -157,21 +232,32 @@
 
             errorBox.classList.add('hidden');
 
-            // 1. คำนวณจำนวนเงินที่ยอมเสียได้ (Risk Amount)
+            const config = pairConfig[selectedPair];
             const riskAmt = capital * (riskPercent / 100);
             
-            // 2. ดึงค่า Pip Value ของคู่เงินที่เลือก
-            const pipValuePerLot = pipValues[selectedPair];
+            // Convert points to price difference
+            // Standard: 10 points = 1 pip for most pairs in this config
+            const priceDiff = slPoints / config.multiplier;
 
-            // 3. คำนวณ Lot Size
-            // สูตร: Lot = Risk Amount / (Stop Loss in Pips * Pip Value per Lot)
-            const lotSize = riskAmt / (stopLossPips * pipValuePerLot);
+            // 1. Calculate Lot Size
+            // Formula: Risk / (Pips * PipValue) -> slPoints are often treated as "Points" (10 per pip)
+            const lotSize = riskAmt / (slPoints * (config.pipValue / 10));
 
-            // แสดงผล
+            // 2. Calculate Prices
+            const isBuy = orderType === 'buy';
+            const slPrice = isBuy ? (entry - priceDiff) : (entry + priceDiff);
+            const tpPrice = isBuy ? (entry + (priceDiff * rr)) : (entry - (priceDiff * rr));
+            const profitExpected = riskAmt * rr;
+
+            // Display Results
             document.getElementById('riskAmount').innerText = '$' + riskAmt.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('pipValueDisplay').innerText = '$' + pipValuePerLot.toFixed(2);
-            document.getElementById('lotResult').innerText = lotSize.toFixed(2);
-            document.getElementById('pairInfo').innerText = "คำนวณแม่นยำสำหรับคู่เงิน: " + selectedPair;
+            document.getElementById('profitAmount').innerText = '$' + profitExpected.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            document.getElementById('lotResult').innerText = lotSize.toFixed(precision);
+            document.getElementById('slResultPrice').innerText = slPrice.toFixed(config.decimal);
+            document.getElementById('tpResult').innerText = tpPrice.toFixed(config.decimal);
+            
+            document.getElementById('distInfo').innerText = (isBuy ? "BUY" : "SELL") + " | RR 1:" + rr + " | ระยะ " + slPoints + " จุด";
             
             resultContainer.classList.remove('hidden');
         }
