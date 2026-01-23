@@ -6,6 +6,8 @@
     <title>Trading Lot Size Calculator (Point-based)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 library -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: 'Kanit', sans-serif;
@@ -41,6 +43,12 @@
         #typeBuy:checked + label {
             background-color: #10b981;
             border-color: #10b981;
+        }
+        /* SweetAlert Custom UI */
+        .swal2-popup {
+            font-family: 'Kanit', sans-serif !important;
+            border-radius: 1.5rem !important;
+            padding: 2rem !important;
         }
     </style>
 </head>
@@ -79,7 +87,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Input B: ความเสี่ยง% -->
+                <!-- ความเสี่ยง% -->
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">ความเสี่ยง (%)</label>
                     <div class="relative">
@@ -100,14 +108,14 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Input: ราคาเปิด -->
+                <!-- ราคาเปิด -->
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">ราคาเปิด (Entry)</label>
-                    <input type="number" id="entryPrice" step="any" placeholder="4920.00" 
+                    <input type="number" id="entryPrice" step="any" placeholder="2000.00" 
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus">
                 </div>
 
-                <!-- Input: SL Distance in Points -->
+                <!-- SL Points -->
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">ระยะ SL (จุด/Points)</label>
                     <input type="number" id="slPoints" step="1" placeholder="500" 
@@ -115,7 +123,7 @@
                 </div>
             </div>
 
-            <!-- Risk/Reward Selection -->
+            <!-- RR Selection -->
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">อัตราส่วน RR (Risk:Reward)</label>
                 <div class="grid grid-cols-4 gap-2">
@@ -127,10 +135,10 @@
                 <input type="hidden" id="rrValue" value="2">
             </div>
 
-            <!-- Lot Size Decimal Precision Selection -->
+            <!-- Lot Precision -->
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">ทศนิยม Lot Size</label>
-                <div class="grid grid-cols-6 sm:grid-cols-6 gap-2">
+                <div class="grid grid-cols-6 gap-2">
                     <div><input type="radio" name="precision" id="p2" value="2" class="hidden precision-radio" checked><label for="p2" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">2</label></div>
                     <div><input type="radio" name="precision" id="p3" value="3" class="hidden precision-radio"><label for="p3" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">3</label></div>
                     <div><input type="radio" name="precision" id="p4" value="4" class="hidden precision-radio"><label for="p4" class="flex items-center justify-center py-2 border border-slate-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-slate-50 transition-all">4</label></div>
@@ -144,45 +152,6 @@
                 class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-lg">
                 คำนวณผลลัพธ์
             </button>
-        </div>
-
-        <!-- Result Section -->
-        <div id="resultContainer" class="mt-8 space-y-4 hidden">
-            <!-- Main Result: Lot Size -->
-            <div class="p-6 bg-blue-600 rounded-2xl text-white relative overflow-hidden text-center shadow-xl shadow-blue-200">
-                <div class="relative z-10">
-                    <p class="text-blue-100 text-xs uppercase font-bold tracking-widest mb-1">Lot Size ที่ควรเปิด</p>
-                    <h2 id="lotResult" class="text-5xl font-extrabold tracking-tight break-all">0.00</h2>
-                    <p id="distInfo" class="text-blue-200 text-sm mt-2 font-medium"></p>
-                </div>
-            </div>
-
-            <!-- Price Targets -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-center">
-                    <p class="text-emerald-600 text-xs font-bold uppercase tracking-wide mb-1">Take Profit (TP)</p>
-                    <h3 id="tpResult" class="text-2xl font-bold text-emerald-700">0.00</h3>
-                </div>
-                <div class="p-4 bg-red-50 rounded-xl border border-red-100 text-center">
-                    <p class="text-red-600 text-xs font-bold uppercase tracking-wide mb-1">Stop Loss (SL)</p>
-                    <h3 id="slResultPrice" class="text-2xl font-bold text-red-700">0.00</h3>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm text-center">
-                    <p class="text-slate-400 text-xs font-semibold mb-1 uppercase">เงินที่ยอมเสีย</p>
-                    <p id="riskAmount" class="text-xl font-bold text-red-500">$0.00</p>
-                </div>
-                <div class="p-4 bg-white rounded-xl border border-slate-100 shadow-sm text-center">
-                    <p class="text-slate-400 text-xs font-semibold mb-1 uppercase">กำไรเป้าหมาย</p>
-                    <p id="profitAmount" class="text-xl font-bold text-emerald-600">$0.00</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="errorBox" class="mt-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl hidden border border-red-100 flex items-center">
-            <span class="mr-2">⚠️</span> กรุณากรอกข้อมูลให้ครบถ้วนและระยะ SL ต้องมากกว่า 0
         </div>
     </div>
 
@@ -220,45 +189,63 @@
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
             const precision = parseInt(document.querySelector('input[name="precision"]:checked').value);
 
-            const resultContainer = document.getElementById('resultContainer');
-            const errorBox = document.getElementById('errorBox');
-
             if (isNaN(capital) || isNaN(riskPercent) || isNaN(entry) || isNaN(slPoints) || slPoints <= 0) {
-                errorBox.classList.remove('hidden');
-                resultContainer.classList.add('hidden');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ข้อมูลไม่สมบูรณ์',
+                    text: 'กรุณากรอกข้อมูลให้ครบถ้วนและระยะ SL ต้องมากกว่า 0',
+                    confirmButtonColor: '#334155'
+                });
                 return;
             }
 
-            errorBox.classList.add('hidden');
-
             const config = pairConfig[selectedPair];
             const riskAmt = capital * (riskPercent / 100);
-            
-            // Convert points to price difference
-            // Standard: 10 points = 1 pip for most pairs in this config
             const priceDiff = slPoints / config.multiplier;
-
-            // 1. Calculate Lot Size
-            // Formula: Risk / (Pips * PipValue) -> slPoints are often treated as "Points" (10 per pip)
             const lotSize = riskAmt / (slPoints * (config.pipValue / 10));
 
-            // 2. Calculate Prices
             const isBuy = orderType === 'buy';
             const slPrice = isBuy ? (entry - priceDiff) : (entry + priceDiff);
             const tpPrice = isBuy ? (entry + (priceDiff * rr)) : (entry - (priceDiff * rr));
             const profitExpected = riskAmt * rr;
 
-            // Display Results
-            document.getElementById('riskAmount').innerText = '$' + riskAmt.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('profitAmount').innerText = '$' + profitExpected.toLocaleString(undefined, {minimumFractionDigits: 2});
-            
-            document.getElementById('lotResult').innerText = lotSize.toFixed(precision);
-            document.getElementById('slResultPrice').innerText = slPrice.toFixed(config.decimal);
-            document.getElementById('tpResult').innerText = tpPrice.toFixed(config.decimal);
-            
-            document.getElementById('distInfo').innerText = (isBuy ? "BUY" : "SELL") + " | RR 1:" + rr + " | ระยะ " + slPoints + " จุด";
-            
-            resultContainer.classList.remove('hidden');
+            // Show Results ONLY in SweetAlert
+            Swal.fire({
+                title: 'สรุปแผนการเทรด 💹',
+                html: `
+                    <div class="mt-4 space-y-4">
+                        <!-- Lot Size Highlight -->
+                        <div class="bg-blue-600 p-6 rounded-2xl shadow-xl text-white">
+                            <span class="block text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Lot Size ที่แนะนำ</span>
+                            <span class="text-5xl font-extrabold tracking-tight">${lotSize.toFixed(precision)}</span>
+                        </div>
+                        
+                        <!-- Financial Summary -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-center">
+                                <span class="block text-emerald-600 text-[11px] font-bold uppercase mb-1">กำไรเป้าหมาย (TP)</span>
+                                <span class="text-xl font-bold text-emerald-700">+$${profitExpected.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                <div class="mt-2 text-[10px] font-mono text-emerald-600 bg-white border border-emerald-100 rounded py-0.5">Price: ${tpPrice.toFixed(config.decimal)}</div>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-xl border border-red-100 text-center">
+                                <span class="block text-red-600 text-[11px] font-bold uppercase mb-1">เงินที่ยอมเสีย (SL)</span>
+                                <span class="text-xl font-bold text-red-700">-$${riskAmt.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                <div class="mt-2 text-[10px] font-mono text-red-600 bg-white border border-red-100 rounded py-0.5">Price: ${slPrice.toFixed(config.decimal)}</div>
+                            </div>
+                        </div>
+
+                        <!-- Trade Details -->
+                        <div class="bg-slate-50 p-3 rounded-xl flex justify-around text-slate-500 text-[11px] font-semibold border border-slate-100">
+                             <div class="flex items-center"><span class="mr-1">🔹</span> TYPE: ${orderType.toUpperCase()}</div>
+                             <div class="flex items-center"><span class="mr-1">🔹</span> RR: 1:${rr}</div>
+                             <div class="flex items-center"><span class="mr-1">🔹</span> SL: ${slPoints} PTS</div>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'ปิดหน้าต่าง',
+                confirmButtonColor: '#1e293b',
+                backdrop: `rgba(15, 23, 42, 0.4)`
+            });
         }
     </script>
 </body>
