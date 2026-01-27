@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lot Size Calculator</title>
-    <link rel="icon" type="image/x-icon" href="dollaricon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <!-- SweetAlert2 library -->
@@ -40,7 +39,6 @@
             background-color: #10b981;
             border-color: #10b981;
         }
-        /* SweetAlert Custom UI */
         .swal2-popup {
             font-family: 'Kanit', sans-serif !important;
             border-radius: 1.5rem !important;
@@ -52,7 +50,7 @@
 
     <div class="w-full max-w-lg glass-card p-8 my-8">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">คำนวน Lotsize 📈</h1>
+            <h1 class="text-3xl font-bold text-slate-800">คำนวณ Lotsize 📈</h1>
         </div>
 
         <div class="space-y-6">
@@ -62,10 +60,13 @@
                 <select id="pairSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer text-slate-700">
                     <option value="XAUUSD">XAUUSD (Gold)</option>
                     <option value="EURUSD">EURUSD</option>
+                    <option value="GBPUSD">GBPUSD</option>
                     <option value="USDJPY">USDJPY</option>
                     <option value="USDCAD">USDCAD</option>
+                    <option value="AUDUSD">AUDUSD</option>
                     <option value="EURAUD">EURAUD</option>
                     <option value="EURJPY">EURJPY</option>
+                    <option value="GBPJPY">GBPJPY</option>
                 </select>
             </div>
 
@@ -140,12 +141,17 @@
     </div>
 
     <script>
+        // กำหนดค่า Config ของแต่ละคู่เงินให้สอดคล้องกับ Option ใน HTML
         const pairConfig = {
             'XAUUSD': { pipValue: 10, multiplier: 10, decimal: 2 },    
-            'EURUSD': { pipValue: 10, multiplier: 10000, decimal: 5 }, 
-            'USDJPY': { pipValue: 8.33, multiplier: 100, decimal: 3 }, 
-            'USDCAD': { pipValue: 7.14, multiplier: 10000, decimal: 5 },
-            'EURAUD': { pipValue: 6.50, multiplier: 10000, decimal: 5 }
+            'EURUSD': { pipValue: 10, multiplier: 100000, decimal: 5 }, 
+            'GBPUSD': { pipValue: 10, multiplier: 100000, decimal: 5 }, 
+            'USDJPY': { pipValue: 8.33, multiplier: 1000, decimal: 3 }, 
+            'USDCAD': { pipValue: 7.14, multiplier: 100000, decimal: 5 },
+            'AUDUSD': { pipValue: 10, multiplier: 100000, decimal: 5 },
+            'EURAUD': { pipValue: 6.50, multiplier: 100000, decimal: 5 },
+            'EURJPY': { pipValue: 8.33, multiplier: 1000, decimal: 3 },
+            'GBPJPY': { pipValue: 8.33, multiplier: 1000, decimal: 3 }
         };
 
         function setRR(val) {
@@ -172,6 +178,18 @@
             const selectedPair = document.getElementById('pairSelect').value;
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
 
+            // ตรวจสอบว่ามี config ของคู่เงินนี้หรือไม่
+            const config = pairConfig[selectedPair];
+            if (!config) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ข้อผิดพลาด',
+                    text: 'ไม่พบข้อมูลการตั้งค่าสำหรับคู่เงิน ' + selectedPair,
+                    confirmButtonColor: '#334155'
+                });
+                return;
+            }
+
             if (isNaN(capital) || isNaN(riskPercent) || isNaN(entry) || isNaN(slPoints) || slPoints <= 0) {
                 Swal.fire({
                     icon: 'warning',
@@ -182,28 +200,28 @@
                 return;
             }
 
-            const config = pairConfig[selectedPair];
             const riskAmt = capital * (riskPercent / 100);
-            const priceDiff = slPoints / config.multiplier;
+            
+            // สูตรคำนวณ Lot Size พื้นฐาน (Risk / (SL Points * Value per Point))
+            // โดยทั่วไป 1 lot standard ของทอง 1 point = $1, ส่วนคู่เงิน 1 point = $0.1 (โดยประมาณ)
+            // สำหรับความง่ายและแม่นยำในระดับจุด (Points)
             const lotSize = riskAmt / (slPoints * (config.pipValue / 10));
 
+            const priceDiff = slPoints / config.multiplier;
             const isBuy = orderType === 'buy';
             const slPrice = isBuy ? (entry - priceDiff) : (entry + priceDiff);
             const tpPrice = isBuy ? (entry + (priceDiff * rr)) : (entry - (priceDiff * rr));
             const profitExpected = riskAmt * rr;
 
-            // Show Results ONLY in SweetAlert (No Decimals for USD amounts)
             Swal.fire({
                 title: 'สรุปแผนการเทรด 💹',
                 html: `
                     <div class="mt-4 space-y-4">
-                        <!-- Lot Size Highlight -->
                         <div class="bg-blue-600 p-6 rounded-2xl shadow-xl text-white">
                             <span class="block text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Lot Size ที่แนะนำ</span>
                             <span class="text-5xl font-extrabold tracking-tight">${lotSize.toFixed(2)}</span>
                         </div>
                         
-                        <!-- Financial Summary (No Decimals for Amount) -->
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-center">
                                 <span class="block text-emerald-600 text-[11px] font-bold uppercase mb-1">กำไรเป้าหมาย (TP)</span>
@@ -217,9 +235,8 @@
                             </div>
                         </div>
 
-                        <!-- Trade Details -->
                         <div class="bg-slate-50 p-3 rounded-xl flex justify-around text-slate-500 text-[11px] font-semibold border border-slate-100">
-                             <div class="flex items-center"><span class="mr-1">🔹</span> TYPE: ${orderType.toUpperCase()}</div>
+                             <div class="flex items-center"><span class="mr-1">🔹</span> PAIR: ${selectedPair}</div>
                              <div class="flex items-center"><span class="mr-1">🔹</span> RR: 1:${rr}</div>
                              <div class="flex items-center"><span class="mr-1">🔹</span> SL: ${slPoints} PTS</div>
                         </div>
