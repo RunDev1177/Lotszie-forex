@@ -42,7 +42,7 @@
         .swal2-popup {
             font-family: 'Kanit', sans-serif !important;
             border-radius: 1.5rem !important;
-            padding: 2rem !important;
+            padding: 1.5rem !important;
         }
     </style>
 </head>
@@ -57,7 +57,7 @@
             <!-- คู่เงิน Selection -->
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">เลือกคู่เงิน (Select Pair)</label>
-                <select id="pairSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer text-slate-700">
+                <select id="pairSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer text-slate-700 font-medium">
                     <option value="XAUUSD">XAUUSD (Gold)</option>
                     <option value="EURUSD">EURUSD</option>
                     <option value="GBPUSD">GBPUSD</option>
@@ -141,7 +141,6 @@
     </div>
 
     <script>
-        // กำหนดค่า Config ของแต่ละคู่เงินให้สอดคล้องกับ Option ใน HTML
         const pairConfig = {
             'XAUUSD': { pipValue: 10, multiplier: 10, decimal: 2 },    
             'EURUSD': { pipValue: 10, multiplier: 100000, decimal: 5 }, 
@@ -159,7 +158,6 @@
             document.querySelectorAll('.rr-btn').forEach(btn => {
                 if(parseFloat(btn.getAttribute('data-rr')) === val) {
                     btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-                    btn.classList.remove('border-slate-200', 'text-slate-600');
                 } else {
                     btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
                     btn.classList.add('border-slate-200', 'text-slate-600');
@@ -178,35 +176,21 @@
             const selectedPair = document.getElementById('pairSelect').value;
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
 
-            // ตรวจสอบว่ามี config ของคู่เงินนี้หรือไม่
             const config = pairConfig[selectedPair];
-            if (!config) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'ข้อผิดพลาด',
-                    text: 'ไม่พบข้อมูลการตั้งค่าสำหรับคู่เงิน ' + selectedPair,
-                    confirmButtonColor: '#334155'
-                });
-                return;
-            }
+            if (!config) return;
 
             if (isNaN(capital) || isNaN(riskPercent) || isNaN(entry) || isNaN(slPoints) || slPoints <= 0) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'ข้อมูลไม่สมบูรณ์',
-                    text: 'กรุณากรอกข้อมูลให้ครบถ้วนและระยะ SL ต้องมากกว่า 0',
+                    text: 'กรุณากรอกข้อมูลให้ครบถ้วน',
                     confirmButtonColor: '#334155'
                 });
                 return;
             }
 
             const riskAmt = capital * (riskPercent / 100);
-            
-            // สูตรคำนวณ Lot Size พื้นฐาน (Risk / (SL Points * Value per Point))
-            // โดยทั่วไป 1 lot standard ของทอง 1 point = $1, ส่วนคู่เงิน 1 point = $0.1 (โดยประมาณ)
-            // สำหรับความง่ายและแม่นยำในระดับจุด (Points)
             const lotSize = riskAmt / (slPoints * (config.pipValue / 10));
-
             const priceDiff = slPoints / config.multiplier;
             const isBuy = orderType === 'buy';
             const slPrice = isBuy ? (entry - priceDiff) : (entry + priceDiff);
@@ -216,35 +200,46 @@
             Swal.fire({
                 title: 'สรุปแผนการเทรด 💹',
                 html: `
-                    <div class="mt-4 space-y-4">
-                        <div class="bg-blue-600 p-6 rounded-2xl shadow-xl text-white">
-                            <span class="block text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Lot Size ที่แนะนำ</span>
-                            <span class="text-5xl font-extrabold tracking-tight">${lotSize.toFixed(2)}</span>
+                    <div class="mt-2 space-y-4">
+                        <!-- Lot Size & Entry -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-blue-600 p-4 rounded-2xl shadow-lg text-white text-center">
+                                <span class="block text-blue-100 text-[10px] font-bold uppercase mb-1">Lot Size</span>
+                                <span class="text-4xl font-black">${lotSize.toFixed(2)}</span>
+                            </div>
+                            <div class="bg-slate-800 p-4 rounded-2xl shadow-lg text-white text-center">
+                                <span class="block text-slate-400 text-[10px] font-bold uppercase mb-1">Entry Price</span>
+                                <span class="text-2xl font-bold">${entry.toFixed(config.decimal)}</span>
+                            </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-center">
-                                <span class="block text-emerald-600 text-[11px] font-bold uppercase mb-1">กำไรเป้าหมาย (TP)</span>
-                                <span class="text-xl font-bold text-emerald-700">+$${Math.round(profitExpected).toLocaleString()}</span>
-                                <div class="mt-2 text-[10px] font-mono text-emerald-600 bg-white border border-emerald-100 rounded py-0.5">Price: ${tpPrice.toFixed(config.decimal)}</div>
+                        <!-- Target TP & SL -->
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="bg-emerald-50 p-5 rounded-2xl border-2 border-emerald-200 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 bg-emerald-200 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-emerald-700">TARGET TP (+$${Math.round(profitExpected)})</div>
+                                <span class="block text-emerald-600 text-xs font-bold mb-1">Take Profit Price:</span>
+                                <span class="text-4xl font-black text-emerald-700 font-mono tracking-tight">${tpPrice.toFixed(config.decimal)}</span>
                             </div>
-                            <div class="bg-red-50 p-4 rounded-xl border border-red-100 text-center">
-                                <span class="block text-red-600 text-[11px] font-bold uppercase mb-1">เงินที่ยอมเสีย (SL)</span>
-                                <span class="text-xl font-bold text-red-700">-$${Math.round(riskAmt).toLocaleString()}</span>
-                                <div class="mt-2 text-[10px] font-mono text-red-600 bg-white border border-red-100 rounded py-0.5">Price: ${slPrice.toFixed(config.decimal)}</div>
+
+                            <div class="bg-red-50 p-5 rounded-2xl border-2 border-red-200 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 bg-red-200 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-red-700">STOP LOSS (-$${Math.round(riskAmt)})</div>
+                                <span class="block text-red-600 text-xs font-bold mb-1">Stop Loss Price:</span>
+                                <span class="text-4xl font-black text-red-700 font-mono tracking-tight">${slPrice.toFixed(config.decimal)}</span>
                             </div>
                         </div>
 
-                        <div class="bg-slate-50 p-3 rounded-xl flex justify-around text-slate-500 text-[11px] font-semibold border border-slate-100">
-                             <div class="flex items-center"><span class="mr-1">🔹</span> PAIR: ${selectedPair}</div>
-                             <div class="flex items-center"><span class="mr-1">🔹</span> RR: 1:${rr}</div>
-                             <div class="flex items-center"><span class="mr-1">🔹</span> SL: ${slPoints} PTS</div>
+                        <!-- Footer Details -->
+                        <div class="bg-slate-100 p-3 rounded-xl flex justify-between px-6 text-slate-500 text-[11px] font-bold border border-slate-200">
+                             <div>PAIR: ${selectedPair}</div>
+                             <div>TYPE: ${orderType.toUpperCase()}</div>
+                             <div>RR: 1:${rr}</div>
+                             <div>SL: ${slPoints} PTS</div>
                         </div>
                     </div>
                 `,
-                confirmButtonText: 'ปิดหน้าต่าง',
+                confirmButtonText: 'รับทราบแผน',
                 confirmButtonColor: '#1e293b',
-                backdrop: `rgba(15, 23, 42, 0.4)`
+                backdrop: `rgba(15, 23, 42, 0.6)`
             });
         }
     </script>
