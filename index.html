@@ -44,30 +44,74 @@
             border-radius: 1.5rem !important;
             padding: 1.5rem !important;
         }
+        .calc-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 12px 5px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.1s;
+        }
+        .calc-btn:active {
+            transform: scale(0.95);
+            background: #e2e8f0;
+        }
+        .calc-display {
+            background: #1e293b;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: right;
+            font-size: 1.5rem;
+            font-family: monospace;
+            margin-bottom: 10px;
+            min-height: 60px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-lg glass-card p-8 my-8">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">คำนวณ Lotsize 📈</h1>
+    <div class="w-full max-w-lg glass-card p-8 my-8 relative">
+        <!-- เครื่องคิดเลข Icon Header -->
+        <div class="flex flex-col items-center justify-center mb-6">
+            <button onclick="openMiniCalculator()" class="p-4 bg-slate-100 hover:bg-blue-100 rounded-full transition-all group shadow-sm active:scale-90" title="เปิดเครื่องคิดเลข">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-700 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+            </button>
+            <span class="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest">Lot Size Calculator</span>
         </div>
 
         <div class="space-y-6">
-            <!-- คู่เงิน Selection -->
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">เลือกคู่เงิน (Select Pair)</label>
-                <select id="pairSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer text-slate-700 font-medium">
-                    <option value="XAUUSD">XAUUSD (Gold)</option>
-                    <option value="EURUSD">EURUSD</option>
-                    <option value="GBPUSD">GBPUSD</option>
-                    <option value="USDJPY">USDJPY</option>
-                    <option value="USDCAD">USDCAD</option>
-                    <option value="AUDUSD">AUDUSD</option>
-                    <option value="EURAUD">EURAUD</option>
-                    <option value="EURJPY">EURJPY</option>
-                    <option value="GBPJPY">GBPJPY</option>
-                </select>
+            <!-- คู่เงิน และ ทศนิยม Selection -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-2">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">คู่เงิน (Pair)</label>
+                    <select id="pairSelect" onchange="updateDecimalOnPairChange()" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer text-slate-700 font-medium">
+                        <option value="XAUUSD">XAUUSD (Gold)</option>
+                        <option value="EURUSD">EURUSD</option>
+                        <option value="GBPUSD">GBPUSD</option>
+                        <option value="USDJPY">USDJPY</option>
+                        <option value="USDCAD">USDCAD</option>
+                        <option value="AUDUSD">AUDUSD</option>
+                        <option value="EURAUD">EURAUD</option>
+                        <option value="EURJPY">EURJPY</option>
+                        <option value="GBPJPY">GBPJPY</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">ทศนิยม</label>
+                    <select id="decimalSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none input-focus cursor-pointer text-slate-700 font-medium">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -141,17 +185,28 @@
     </div>
 
     <script>
+        // Config ที่ปรับแก้ให้แม่นยำขึ้น
+        // multiplier: ใช้แปลง Points กลับเป็น Price Difference
+        // pipValuePerLot: มูลค่าต่อ 1 Lot ต่อ 1 Point (เช่น Forex 1 Lot 1 Point = $0.1, Gold 1 Lot 1 Point = $0.1)
         const pairConfig = {
-            'XAUUSD': { pipValue: 10, multiplier: 10, decimal: 2 },    
-            'EURUSD': { pipValue: 10, multiplier: 100000, decimal: 5 }, 
-            'GBPUSD': { pipValue: 10, multiplier: 100000, decimal: 5 }, 
-            'USDJPY': { pipValue: 8.33, multiplier: 1000, decimal: 3 }, 
-            'USDCAD': { pipValue: 7.14, multiplier: 100000, decimal: 5 },
-            'AUDUSD': { pipValue: 10, multiplier: 100000, decimal: 5 },
-            'EURAUD': { pipValue: 6.50, multiplier: 100000, decimal: 5 },
-            'EURJPY': { pipValue: 8.33, multiplier: 1000, decimal: 3 },
-            'GBPJPY': { pipValue: 8.33, multiplier: 1000, decimal: 3 }
+            'XAUUSD': { multiplier: 100, decimal: 2, pipValue: 0.1 },    
+            'EURUSD': { multiplier: 100000, decimal: 5, pipValue: 0.1 }, 
+            'GBPUSD': { multiplier: 100000, decimal: 5, pipValue: 0.1 }, 
+            'USDJPY': { multiplier: 1000, decimal: 3, pipValue: 0.1 }, 
+            'USDCAD': { multiplier: 100000, decimal: 5, pipValue: 0.1 },
+            'AUDUSD': { multiplier: 100000, decimal: 5, pipValue: 0.1 },
+            'EURAUD': { multiplier: 100000, decimal: 5, pipValue: 0.1 },
+            'EURJPY': { multiplier: 1000, decimal: 3, pipValue: 0.1 },
+            'GBPJPY': { multiplier: 1000, decimal: 3, pipValue: 0.1 }
         };
+
+        function updateDecimalOnPairChange() {
+            const pair = document.getElementById('pairSelect').value;
+            const decimalSelect = document.getElementById('decimalSelect');
+            if (pairConfig[pair]) {
+                decimalSelect.value = pairConfig[pair].decimal;
+            }
+        }
 
         function setRR(val) {
             document.getElementById('rrValue').value = val;
@@ -167,6 +222,62 @@
 
         setRR(2);
 
+        let calcInput = "";
+        function openMiniCalculator() {
+            Swal.fire({
+                title: 'เครื่องคิดเลข',
+                html: `
+                    <div class="p-1">
+                        <div id="calcDisplay" class="calc-display">0</div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button class="calc-btn text-red-500" onclick="updateCalc('C')">C</button>
+                            <button class="calc-btn text-blue-500 font-bold" onclick="updateCalc('%')">%</button>
+                            <button class="calc-btn" onclick="updateCalc('del')">⌫</button>
+                            <button class="calc-btn" onclick="updateCalc('/')">÷</button>
+                            
+                            <button class="calc-btn" onclick="updateCalc('7')">7</button>
+                            <button class="calc-btn" onclick="updateCalc('8')">8</button>
+                            <button class="calc-btn" onclick="updateCalc('9')">9</button>
+                            <button class="calc-btn" onclick="updateCalc('*')">×</button>
+                            
+                            <button class="calc-btn" onclick="updateCalc('4')">4</button>
+                            <button class="calc-btn" onclick="updateCalc('5')">5</button>
+                            <button class="calc-btn" onclick="updateCalc('6')">6</button>
+                            <button class="calc-btn text-blue-500 font-bold" onclick="updateCalc('-')">-</button>
+                            
+                            <button class="calc-btn" onclick="updateCalc('1')">1</button>
+                            <button class="calc-btn" onclick="updateCalc('2')">2</button>
+                            <button class="calc-btn" onclick="updateCalc('3')">3</button>
+                            <button class="calc-btn text-blue-500 font-bold" onclick="updateCalc('+')">+</button>
+                            
+                            <button class="calc-btn" onclick="updateCalc('0')">0</button>
+                            <button class="calc-btn" onclick="updateCalc('00')">00</button>
+                            <button class="calc-btn" onclick="updateCalc('.')">.</button>
+                            <button class="calc-btn bg-blue-600 text-white font-bold" onclick="updateCalc('=')">=</button>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCloseButton: true,
+                didOpen: () => { calcInput = ""; }
+            });
+        }
+
+        window.updateCalc = function(val) {
+            const display = document.getElementById('calcDisplay');
+            if(val === 'C') calcInput = "";
+            else if(val === 'del') calcInput = calcInput.slice(0, -1);
+            else if(val === '%') {
+                try { if (calcInput) calcInput = (eval(calcInput) / 100).toString(); } catch { calcInput = "Error"; }
+            } else if(val === '=') {
+                try { calcInput = eval(calcInput.replace(/×/g, '*').replace(/÷/g, '/')).toString(); } catch {
+                    calcInput = "Error";
+                    setTimeout(() => { calcInput = ""; display.innerText = "0"; }, 1000);
+                }
+            } else calcInput += val;
+            display.innerText = calcInput || "0";
+        }
+
         function calculateLot() {
             const capital = parseFloat(document.getElementById('capital').value);
             const riskPercent = parseFloat(document.getElementById('riskPercent').value);
@@ -174,6 +285,7 @@
             const slPoints = parseFloat(document.getElementById('slPoints').value);
             const rr = parseFloat(document.getElementById('rrValue').value);
             const selectedPair = document.getElementById('pairSelect').value;
+            const customDecimal = parseInt(document.getElementById('decimalSelect').value);
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
 
             const config = pairConfig[selectedPair];
@@ -189,8 +301,16 @@
                 return;
             }
 
+            // สูตรคำนวณที่ถูกต้อง
+            // Risk Amount ($) = Capital * (Risk% / 100)
+            // Lot Size = Risk Amount / (SL Points * Pip Value Per Lot Per Point)
             const riskAmt = capital * (riskPercent / 100);
-            const lotSize = riskAmt / (slPoints * (config.pipValue / 10));
+            
+            // สำหรับโบรกเกอร์ส่วนใหญ่ 1 Point (5th decimal) ของ Forex 1 Lot มีค่า $0.1
+            // สำหรับ Gold 1 Point (2nd decimal) ของ Gold 1 Lot มีค่า $0.1 (ถ้า 1.00 USD = 100 points)
+            const lotSize = riskAmt / (slPoints * 0.1); 
+
+            // คำนวณราคา SL/TP
             const priceDiff = slPoints / config.multiplier;
             const isBuy = orderType === 'buy';
             const slPrice = isBuy ? (entry - priceDiff) : (entry + priceDiff);
@@ -200,40 +320,37 @@
             Swal.fire({
                 title: 'สรุปแผนการเทรด 💹',
                 html: `
-                    <div class="mt-2 space-y-4">
-                        <!-- Lot Size & Entry -->
+                    <div class="mt-2 space-y-4 text-left">
                         <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-blue-600 p-4 rounded-2xl shadow-lg text-white text-center">
+                            <div class="bg-blue-600 p-4 rounded-2xl shadow-lg text-white text-center border-b-4 border-blue-800">
                                 <span class="block text-blue-100 text-[10px] font-bold uppercase mb-1">Lot Size</span>
                                 <span class="text-4xl font-black">${lotSize.toFixed(2)}</span>
                             </div>
-                            <div class="bg-slate-800 p-4 rounded-2xl shadow-lg text-white text-center">
+                            <div class="bg-slate-800 p-4 rounded-2xl shadow-lg text-white text-center border-b-4 border-slate-900">
                                 <span class="block text-slate-400 text-[10px] font-bold uppercase mb-1">Entry Price</span>
-                                <span class="text-2xl font-bold">${entry.toFixed(config.decimal)}</span>
+                                <span class="text-2xl font-bold">${entry.toFixed(customDecimal)}</span>
                             </div>
                         </div>
                         
-                        <!-- Target TP & SL -->
                         <div class="grid grid-cols-1 gap-3">
                             <div class="bg-emerald-50 p-5 rounded-2xl border-2 border-emerald-200 relative overflow-hidden">
-                                <div class="absolute top-0 right-0 bg-emerald-200 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-emerald-700">TARGET TP (+$${Math.round(profitExpected)})</div>
-                                <span class="block text-emerald-600 text-xs font-bold mb-1">Take Profit Price:</span>
-                                <span class="text-4xl font-black text-emerald-700 font-mono tracking-tight">${tpPrice.toFixed(config.decimal)}</span>
+                                <div class="absolute top-0 right-0 bg-emerald-200 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-emerald-700 uppercase">Target TP</div>
+                                <span class="block text-emerald-600 text-xs font-bold mb-1">Take Profit Price (+$${Math.round(profitExpected).toLocaleString()}):</span>
+                                <span class="text-4xl font-black text-emerald-700 font-mono tracking-tight">${tpPrice.toFixed(customDecimal)}</span>
                             </div>
 
                             <div class="bg-red-50 p-5 rounded-2xl border-2 border-red-200 relative overflow-hidden">
-                                <div class="absolute top-0 right-0 bg-red-200 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-red-700">STOP LOSS (-$${Math.round(riskAmt)})</div>
-                                <span class="block text-red-600 text-xs font-bold mb-1">Stop Loss Price:</span>
-                                <span class="text-4xl font-black text-red-700 font-mono tracking-tight">${slPrice.toFixed(config.decimal)}</span>
+                                <div class="absolute top-0 right-0 bg-red-200 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-red-700 uppercase">Stop Loss</div>
+                                <span class="block text-red-600 text-xs font-bold mb-1">Stop Loss Price (-$${Math.round(riskAmt).toLocaleString()}):</span>
+                                <span class="text-4xl font-black text-red-700 font-mono tracking-tight">${slPrice.toFixed(customDecimal)}</span>
                             </div>
                         </div>
 
-                        <!-- Footer Details -->
                         <div class="bg-slate-100 p-3 rounded-xl flex justify-between px-6 text-slate-500 text-[11px] font-bold border border-slate-200">
                              <div>PAIR: ${selectedPair}</div>
                              <div>TYPE: ${orderType.toUpperCase()}</div>
                              <div>RR: 1:${rr}</div>
-                             <div>SL: ${slPoints} PTS</div>
+                             <div>DEC: ${customDecimal}</div>
                         </div>
                     </div>
                 `,
